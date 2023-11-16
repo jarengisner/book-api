@@ -133,6 +133,26 @@ app.post('/clubs', (req, res) => {
     });
 });
 
+//update
+
+//delete
+
+app.delete('/user/:username', (req, res) => {
+  Users.findOneAndRemove({ username: req.params.username })
+    .then((user) => {
+      if (!user) {
+        console.log('user does not exist');
+      } else {
+        res.send('User was deleted');
+        //add functionality to remove user from state
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log('something went wrong in account deletion');
+    });
+});
+
 const port = 8080;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Listening on port: ${port}`);
