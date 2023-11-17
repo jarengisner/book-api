@@ -64,6 +64,8 @@ app.get('/users/:userId', (req, res) => {
 //POST REQUESTS
 
 //add middleware to check password, etc during this process
+
+//---------------------------------------------------------
 app.post('/users', (req, res) => {
   //hashes submitted password to then store hashed password
   let hashedPassword = Users.hashPassword(req.body.password);
@@ -135,7 +137,94 @@ app.post('/clubs', (req, res) => {
 
 //update
 
-//delete
+//Need one to update leaving the groups members array
+
+//update profile
+
+//update group current book
+//current book will be at the end of storage array, past ones will be further back in array
+
+//----------------------------------------------------
+app.put('/clubs/:name/updatebooks', (req, res) => {
+  //variable to hold current book that we are looking at
+  //const currBook = req.body.book ??????
+  Groups.findOneAndUpdate(
+    { name: req.params.name },
+    { $push: { books: req.body.book } },
+    { new: true }
+  )
+    .then((updateDoc) => {
+      console.log(updateDoc);
+      res.json(updateDoc);
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log(
+        'There was an error pushing a new book into a groups books array'
+      );
+    });
+});
+
+//update profile
+app.put('/users/update/:username', (req, res) => {
+  Users.findOneAndUpdate(
+    { username: req.params.username },
+    {
+      $set: {
+        username: req.body.newUsername,
+        bio: req.body.newBio,
+        profilePic: req.body.newProfilePic,
+      },
+    },
+    { new: true }
+  )
+    .then((updatedUser) => {
+      res.json(updatedUser);
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log('Something went wrong when updating user details');
+    });
+});
+
+//Update Password
+app.put('/user/updatepassword/:username', (req, res) => {
+  Users.findOneAndUpdate(
+    { username: req.params.username },
+    { $set: { password: req.body.password } },
+    { new: true }
+  )
+    .then((updatedUser) => {
+      console.log(updatedUser);
+      res.json(updatedUser);
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log('something went wrong when changing password');
+    });
+});
+
+//updates posts to a clubs page
+app.put('/clubs/:name/posts', (req, res) => {
+  Groups.findOneAndUpdate(
+    { name: req.params.name },
+    { $push: { posts: req.body.post } },
+    { new: true }
+  )
+    .then((newPost) => {
+      console.log('Post successfully made');
+      res.json(newPost);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+//Delete requests
+
+//Delete
+
+//------------------------------------------
 
 app.delete('/user/:username', (req, res) => {
   Users.findOneAndRemove({ username: req.params.username })
@@ -151,6 +240,19 @@ app.delete('/user/:username', (req, res) => {
       console.log(err);
       console.log('something went wrong in account deletion');
     });
+});
+
+app.delete('/clubs/:name', (req, res) => {
+  //Add logic to check and make sure that the user deleting the club is the one that created the club
+  //Does current user === group member[0] maybe????
+  Groups.findOneAndRemove({ name: req.params.name }).then((club) => {
+    if (!club) {
+      console.log('This club does not exist');
+      res.send('This club cannot be found');
+    } else {
+      res.send('Club was deleted');
+    }
+  });
 });
 
 const port = 8080;
