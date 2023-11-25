@@ -138,6 +138,41 @@ app.post('/clubs', (req, res) => {
 //update
 
 //Need one to update leaving the groups members array
+//rough start to update for members leaving the group
+/*
+Pretty sure this may be able to be done within just one findOneAndUpdate, will require some more thinking, this is
+just to get the idea of what we are going for
+*/
+app.put('/clubs/:name/:username/leave', (req, res) => {
+  Groups.findOne({ name: req.params.name })
+    .then((item) => res.status(201).json(item))
+    .then((data) => {
+      let currentGroupMembers = data.members;
+    })
+    .catch((err0r) => {
+      console.log(err0r);
+      console.log(
+        'something went wrong when looking for the group wto update after a member has left'
+      );
+    });
+
+  let newGroupMembers = currentGroupMembers.filter(
+    (memberName) => memberName !== req.params.username
+  );
+
+  Groups.findOneAndUpdate(
+    { name: req.params.name },
+    { $push: { members: newGroupMembers } },
+    { new: true }
+  )
+    .then((updatedGroup) => {
+      res.json(updatedGroup);
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log('there was an error when updating group after a member left');
+    });
+});
 
 //update profile
 
