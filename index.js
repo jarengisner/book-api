@@ -1,18 +1,37 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Models = require('./models.js');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
+
+//Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+require('dotenv').config();
 
 const Groups = Models.Group;
 const Users = Models.User;
 
 //connections
-const connect = process.env.CONNECTION_URI;
+const connect = process.env.CONNECT_URI;
 
-mongoose.connect(connect, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+mongoose
+  .connect(process.env.CONNECT_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
+  });
+
+app.get('/', (req, res) => {
+  res.send('Base rendered successfully');
 });
 
 //ENDPOINTS
@@ -182,7 +201,6 @@ app.put('/clubs/:name/:username/leave', (req, res) => {
 //----------------------------------------------------
 app.put('/clubs/:name/updatebooks', (req, res) => {
   //variable to hold current book that we are looking at
-  //const currBook = req.body.book ??????
   Groups.findOneAndUpdate(
     { name: req.params.name },
     { $push: { books: req.body.book } },
@@ -240,6 +258,10 @@ app.put('/user/updatepassword/:username', (req, res) => {
 });
 
 //updates posts to a clubs page
+//SUPER IMPORTANT BELOW
+/*
+Posts need to be made in object format, so that we can add a date, etc, for filtering/presenting posts in order of most recent by default, etc.
+*/
 app.put('/clubs/:name/posts', (req, res) => {
   Groups.findOneAndUpdate(
     { name: req.params.name },
