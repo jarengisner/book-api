@@ -193,8 +193,6 @@ app.put('/clubs/:name/:username/leave', (req, res) => {
     });
 });
 
-//update profile
-
 //update group current book
 //current book will be at the end of storage array, past ones will be further back in array
 
