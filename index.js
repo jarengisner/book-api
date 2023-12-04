@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const Models = require('./models.js');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -17,6 +20,7 @@ const Users = Models.User;
 
 //connections
 const connect = process.env.CONNECT_URI;
+const secret = process.env.JWTSECRET;
 
 mongoose
   .connect(process.env.CONNECT_URI, {
@@ -33,7 +37,51 @@ mongoose
 app.get('/', (req, res) => {
   res.send('Base rendered successfully');
 });
+//------------------------------------------------------
 
+passport.use(
+  new LocalStrategy(async (username, password, done) => {
+    try {
+      // Find the user by username
+      const user = await Users.findOne({ username: username });
+
+      // Check if the user exists and verify the password using the validatePass method
+      if (user && user.validatePass(password)) {
+        return done(null, user);
+      } else {
+        return done(null, false, { message: 'Invalid username or password' });
+      }
+    } catch (error) {
+      return done(error);
+    }
+  })
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  Users.findById(id, (err, user) => {
+    done(err, user);
+  });
+});
+
+// Authentication middleware
+app.use(passport.initialize());
+
+app.post(
+  '/login',
+  passport.authenticate('local', { session: false }),
+  (req, res) => {
+    const token = jwt.sign({ sub: req.user.id }, 'your_secret_key', {
+      expiresIn: '7d',
+    });
+    res.json({ user: req.user, token });
+  }
+);
+
+//------------------------------------------------------
 //ENDPOINTS
 app.get('/clubs', (req, res) => {
   Groups.find()
