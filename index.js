@@ -52,6 +52,7 @@ passport.use(
         return done(null, false, { message: 'Invalid username or password' });
       }
     } catch (error) {
+      console.log(error);
       return done(error);
     }
   })
