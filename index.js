@@ -185,6 +185,7 @@ app.post('/clubs', (req, res) => {
           members: [],
           books: [],
           posts: [],
+          groupImg: 'https://placehold.co/100',
         })
           .then((newGroup) => {
             res.status(201).json(newGroup);
@@ -203,10 +204,6 @@ app.post('/clubs', (req, res) => {
     });
 });
 
-//update
-
-//Need one to update leaving the groups members array
-//rough start to update for members leaving the group
 /*
 Pretty sure this may be able to be done within just one findOneAndUpdate, will require some more thinking, this is
 just to get the idea of what we are going for
@@ -318,6 +315,43 @@ app.put('/clubs/:name/posts', (req, res) => {
     .then((newPost) => {
       console.log('Post successfully made');
       res.json(newPost);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+//Update all group details
+//People will only have the option to update the details if they are the first in the members array aka they made the group
+app.put('/clubs/:name/details', (req, res) => {
+  Groups.findOneAndUpdate(
+    { name: req.params.name },
+    {
+      $set: {
+        name: req.body.name,
+        description: req.body.description,
+      },
+    },
+    { new: true }
+  )
+    .then((updatedGroup) => {
+      console.log('Group updated succesffully');
+      res.json(updatedGroup);
+    })
+    .catch((err) => {
+      console.log(err);
+      console.log('Something went wrong updating the group details');
+    });
+});
+
+app.put('/clubs/:name/groupImg', (req, res) => {
+  Groups.findOneAndUpdate(
+    { name: req.params.name },
+    { $set: { groupImg: req.body.groupImg } },
+    { new: true }
+  )
+    .then(() => {
+      console.log('Group Image succesffully updated');
     })
     .catch((err) => {
       console.log(err);
