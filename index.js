@@ -279,7 +279,7 @@ app.put('/clubs/:name/:username/leave', async (req, res) => {
     // Update the group members
     const currentGroupMembers = group.members;
     const newGroupMembers = currentGroupMembers.filter(
-      (memberName) => memberName !== req.params.username
+      (member) => member.username !== req.params.username
     );
 
     // Update the group in the database
