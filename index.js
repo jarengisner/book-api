@@ -222,89 +222,79 @@ CLUB NAME in the request params
 
 USER username in the body request
 */
-app.put('/clubs/:name/join', (req, res) => {
-  //Updates the group by pushing the users username into the clubs members array from the request body
-  Groups.findOneAndUpdate(
-    { name: req.params.name },
-    { $push: { members: req.body.username } },
-    { new: true }
-  )
-    .then((updatedGroup) => res.json(updatedGroup))
-    .catch((err) => {
-      console.log(err);
-      console.log('There was an error with joining a group');
-    });
 
-  /*
-    This part of the request takes the name of the user from the req body and searches for a user matching
-    that username, it then creates a clubs array key for that user if it does not exist, and if they already
-    have joined a club, it pushes the club name from the request params into their array
-    */
-  Users.findOne({ username: req.body.username }).then((user) => {
-    if (user.clubs) {
-      Users.findOneAndUpdate(
-        { username: req.body.username },
-        { $push: { clubs: req.params.name } }
-      )
-        .then((updatedUser) => {
-          res.json(updatedUser);
-        })
-        .catch((err) => {
-          console.log(err);
-          console.log('Error with updating user with new group name');
-        });
-    } else {
-      Users.findOneAndUpdate(
-        { username: req.body.username },
-        { $set: { clubs: [req.params.name] } },
-        { new: true }
-      )
-        .then((updated) => {
-          res.json(updated);
-        })
-        .catch((err) => {
-          console.log(err);
-          console.log(
-            'There was an issue with creating the clubs array and updating'
-          );
-        });
+app.put('/clubs/join/:name', async (req, res) => {
+  try {
+    // Find the user by username in the request body
+    const user = await Users.findOne({ username: req.body.username });
+
+    // If the user is not found, return an error response
+    if (!user) {
+      return res
+        .status(400)
+        .json({ error: 'No user with this username exists' });
     }
-  });
+
+    // Find the group by name in the URL parameter
+    const group = await Groups.findOne({ name: req.params.name });
+
+    // If the group is not found, return an error response
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Push the user object into the members array of the group
+    group.members.push(user);
+
+    // Update the group in the database
+    const updatedGroup = await Groups.findOneAndUpdate(
+      { name: req.params.name },
+      { $set: { members: group.members } },
+      { new: true }
+    );
+
+    // Return the updated group
+    res.json(updatedGroup);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 /*
 Pretty sure this may be able to be done within just one findOneAndUpdate, will require some more thinking, this is
 just to get the idea of what we are going for
 */
-app.put('/clubs/:name/:username/leave', (req, res) => {
-  Groups.findOne({ name: req.params.name })
-    .then((item) => res.status(201).json(item))
-    .then((data) => {
-      let currentGroupMembers = data.members;
-    })
-    .catch((err0r) => {
-      console.log(err0r);
-      console.log(
-        'something went wrong when looking for the group wto update after a member has left'
-      );
-    });
 
-  let newGroupMembers = currentGroupMembers.filter(
-    (memberName) => memberName !== req.params.username
-  );
+app.put('/clubs/:name/:username/leave', async (req, res) => {
+  try {
+    // Find the group
+    const group = await Groups.findOne({ name: req.params.name });
 
-  Groups.findOneAndUpdate(
-    { name: req.params.name },
-    { $push: { members: newGroupMembers } },
-    { new: true }
-  )
-    .then((updatedGroup) => {
-      res.json(updatedGroup);
-    })
-    .catch((err) => {
-      console.log(err);
-      console.log('there was an error when updating group after a member left');
-    });
+    // If the group is not found, return an error response
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Update the group members
+    const currentGroupMembers = group.members;
+    const newGroupMembers = currentGroupMembers.filter(
+      (memberName) => memberName !== req.params.username
+    );
+
+    // Update the group in the database
+    const updatedGroup = await Groups.findOneAndUpdate(
+      { name: req.params.name },
+      { $set: { members: newGroupMembers } },
+      { new: true }
+    );
+
+    // Return the updated group
+    res.json(updatedGroup);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 //update group current book
