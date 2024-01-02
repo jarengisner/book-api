@@ -99,7 +99,7 @@ app.get('/clubs', (req, res) => {
 app.get('/clubs/:name', (req, res) => {
   Groups.findOne({ name: req.params.name })
     .then((item) => {
-      res.status(201).json(item);
+      res.json(item);
     })
     .catch((err) => {
       console.log(err);
@@ -223,16 +223,18 @@ CLUB NAME in the request params
 USER username in the body request
 */
 
-app.put('/clubs/join/:name', async (req, res) => {
+app.put('/clubs/join/:name/:username', async (req, res) => {
   try {
     // Find the user by username in the request body
-    const user = await Users.findOne({ username: req.body.username });
+    const user = await Users.findOne({ username: req.params.username });
 
     // If the user is not found, return an error response
     if (!user) {
       return res
         .status(400)
         .json({ error: 'No user with this username exists' });
+    } else {
+      console.log(user);
     }
 
     // Find the group by name in the URL parameter
@@ -241,6 +243,8 @@ app.put('/clubs/join/:name', async (req, res) => {
     // If the group is not found, return an error response
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
+    } else {
+      console.log(group);
     }
 
     // Push the user object into the members array of the group
