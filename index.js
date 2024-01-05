@@ -375,8 +375,8 @@ app.put('/clubs/:name/posts', (req, res) => {
     { new: true }
   )
     .then((newPost) => {
-      console.log('Post successfully made');
       res.json(newPost);
+      console.log('Post successfully made');
     })
     .catch((err) => {
       console.log(err);
