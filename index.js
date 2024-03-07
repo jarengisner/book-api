@@ -193,10 +193,11 @@ app.post('/clubs', (req, res) => {
         Groups.create({
           name: req.body.name,
           description: req.body.description,
-          members: [],
+          members: [req.body.groupCreator],
           books: [],
           posts: [],
           groupImg: 'https://placehold.co/100',
+          tags: req.body.tags,
         })
           .then((newGroup) => {
             res.status(201).json(newGroup);
