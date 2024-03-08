@@ -7,7 +7,8 @@ let groupSchema = mongoose.Schema({
   members: [{ type: Object }],
   books: [{ type: Object }],
   posts: [{ type: Object }],
-  profileImg: { type: String },
+  groupImg: { type: String },
+  tags: { type: Array },
 });
 
 let userSchema = mongoose.Schema({
