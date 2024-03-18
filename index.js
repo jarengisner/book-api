@@ -6,6 +6,7 @@ const cors = require('cors');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const jwt = require('jsonwebtoken');
+const AWS = require('aws-sdk');
 
 const app = express();
 
@@ -14,6 +15,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 require('dotenv').config();
+
+AWS.config.update({
+  accessKeyId: process.env.ACCESS_KEY,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  region: 'us-east-2',
+});
 
 const Groups = Models.Group;
 const Users = Models.User;
