@@ -7,8 +7,11 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { multer } = require('multer');
 
 const app = express();
+const upload = multer();
 
 //Middleware
 app.use(cors());
@@ -16,10 +19,13 @@ app.use(bodyParser.json());
 
 require('dotenv').config();
 
-AWS.config.update({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: 'us-east-2',
+// Create an instance of the S3 client
+const s3Client = new S3Client({
+  region: 'us-east-2', // Replace with your desired region
+  credentials: {
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  },
 });
 
 const Groups = Models.Group;
@@ -309,28 +315,62 @@ app.put('/clubs/:name/:username/leave', async (req, res) => {
   }
 });
 
-//update group current book
-//current book will be at the end of storage array, past ones will be further back in array
+//update group photo
 
-//----------------------------------------------------
-app.put('/clubs/:name/updatebooks', (req, res) => {
-  //variable to hold current book that we are looking at
-  Groups.findOneAndUpdate(
-    { name: req.params.name },
-    { $push: { books: req.body.book } },
-    { new: true }
-  )
-    .then((updateDoc) => {
-      console.log(updateDoc);
-      res.json(updateDoc);
-    })
-    .catch((err) => {
-      console.log(err);
-      console.log(
-        'There was an error pushing a new book into a groups books array'
+app.put('/groups/:groupname/picture', (req, res) => {});
+
+//update user photo
+////////////////////////////
+///////////////////////////
+app.put(
+  '/users/:username/picture',
+  upload.single('photo'),
+  async (req, res) => {
+    const username = req.params.username;
+    const photo = req.file; // Assuming the photo is passed as 'photo' field in the multipart/form-data
+
+    try {
+      // Upload photo to S3 bucket
+      const s3UploadParams = {
+        Bucket: 'appphotostorage',
+        Key: `${username}/${photo.originalname}`,
+        Body: photo.buffer,
+        ContentType: photo.mimetype,
+      };
+
+      const uploadResult = await s3Client.send(
+        new PutObjectCommand(s3UploadParams)
       );
-    });
-});
+
+      // Update user's profilePic attribute with the URL to the uploaded photo
+      const photoUrl = `https://${s3UploadParams.Bucket}.s3.amazonaws.com/${s3UploadParams.Key}`;
+      const updatedUser = await Users.findOneAndUpdate(
+        { username: username },
+        { $set: { profilePic: photoUrl } },
+        { new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Photo uploaded and user profile updated successfully',
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.error(
+        'Error uploading photo to S3 or updating user profile:',
+        error
+      );
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred',
+        error: error.message,
+      });
+    }
+  }
+);
+///////////////////////////
+//////////////////////////
+//////////////////////////
 
 //update profile
 app.put('/users/update/:username', (req, res) => {
