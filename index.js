@@ -21,7 +21,7 @@ require('dotenv').config();
 
 // Create an instance of the S3 client
 const s3Client = new S3Client({
-  region: 'us-east-2', // Replace with your desired region
+  region: 'us-east-2',
   credentials: {
     accessKeyId: process.env.ACCESS_KEY,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
@@ -321,48 +321,47 @@ app.put(
   '/groups/:groupname/picture',
   upload.single('photo'),
   async (req, res) => {
-    async (req, res) => {
-      const groupname = req.params.groupname;
-      const photo = req.file; // Assuming the photo is passed as 'photo' field in the multipart/form-data
+    const groupname = req.params.groupname;
+    const photo = req.file;
+    const region = 'us-east-2';
 
-      try {
-        // Upload photo to S3 bucket
-        const s3UploadParams = {
-          Bucket: 'appphotostorage',
-          Key: `${groupname}/${photo.originalname}`,
-          Body: photo.buffer,
-          ContentType: photo.mimetype,
-        };
+    try {
+      // Upload photo to S3 bucket
+      const s3UploadParams = {
+        Bucket: 'appphotostorage',
+        Key: `${groupname}/${photo.originalname}`,
+        Body: photo.buffer,
+        ContentType: photo.mimetype,
+      };
 
-        const uploadResult = await s3Client.send(
-          new PutObjectCommand(s3UploadParams)
-        );
+      const uploadResult = await s3Client.send(
+        new PutObjectCommand(s3UploadParams)
+      );
 
-        // Update user's profilePic attribute with the URL to the uploaded photo
-        const photoUrl = `https://${s3UploadParams.Bucket}.s3.amazonaws.com/${s3UploadParams.Key}`;
-        const updatedGroup = await Groups.findOneAndUpdate(
-          { name: groupname },
-          { $set: { groupImg: photoUrl } },
-          { new: true }
-        );
+      // Update group's profile picture attribute with the URL to the uploaded photo
+      const photoUrl = `https://${s3UploadParams.Bucket}.s3.${region}.amazonaws.com/${s3UploadParams.Key}`;
+      const updatedGroup = await Groups.findOneAndUpdate(
+        { name: groupname },
+        { $set: { groupImg: photoUrl } },
+        { new: true }
+      );
 
-        res.json({
-          success: true,
-          message: 'Photo uploaded and group profile updated successfully',
-          user: updatedGroup,
-        });
-      } catch (error) {
-        console.error(
-          'Error uploading photo to S3 or updating group profile:',
-          error
-        );
-        res.status(500).json({
-          success: false,
-          message: 'An error occurred',
-          error: error.message,
-        });
-      }
-    };
+      res.json({
+        success: true,
+        message: 'Photo uploaded and group profile updated successfully',
+        group: updatedGroup,
+      });
+    } catch (error) {
+      console.error(
+        'Error uploading photo to S3 or updating group profile:',
+        error
+      );
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred',
+        error: error.message,
+      });
+    }
   }
 );
 
