@@ -8,7 +8,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { multer } = require('multer');
+const multer = require('multer');
 
 const app = express();
 const upload = multer();
@@ -317,7 +317,54 @@ app.put('/clubs/:name/:username/leave', async (req, res) => {
 
 //update group photo
 
-app.put('/groups/:groupname/picture', (req, res) => {});
+app.put(
+  '/groups/:groupname/picture',
+  upload.single('photo'),
+  async (req, res) => {
+    async (req, res) => {
+      const groupname = req.params.groupname;
+      const photo = req.file; // Assuming the photo is passed as 'photo' field in the multipart/form-data
+
+      try {
+        // Upload photo to S3 bucket
+        const s3UploadParams = {
+          Bucket: 'appphotostorage',
+          Key: `${groupname}/${photo.originalname}`,
+          Body: photo.buffer,
+          ContentType: photo.mimetype,
+        };
+
+        const uploadResult = await s3Client.send(
+          new PutObjectCommand(s3UploadParams)
+        );
+
+        // Update user's profilePic attribute with the URL to the uploaded photo
+        const photoUrl = `https://${s3UploadParams.Bucket}.s3.amazonaws.com/${s3UploadParams.Key}`;
+        const updatedGroup = await Groups.findOneAndUpdate(
+          { name: groupname },
+          { $set: { groupImg: photoUrl } },
+          { new: true }
+        );
+
+        res.json({
+          success: true,
+          message: 'Photo uploaded and group profile updated successfully',
+          user: updatedGroup,
+        });
+      } catch (error) {
+        console.error(
+          'Error uploading photo to S3 or updating group profile:',
+          error
+        );
+        res.status(500).json({
+          success: false,
+          message: 'An error occurred',
+          error: error.message,
+        });
+      }
+    };
+  }
+);
 
 //update user photo
 ////////////////////////////
