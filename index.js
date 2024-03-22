@@ -346,11 +346,7 @@ app.put(
         { new: true }
       );
 
-      res.json({
-        success: true,
-        message: 'Photo uploaded and group profile updated successfully',
-        group: updatedGroup,
-      });
+      res.json(updatedGroup);
     } catch (error) {
       console.error(
         'Error uploading photo to S3 or updating group profile:',
@@ -486,6 +482,7 @@ app.put('/clubs/:name/details', (req, res) => {
       $set: {
         name: req.body.name,
         description: req.body.description,
+        tags: req.body.tags,
       },
     },
     { new: true }
