@@ -422,7 +422,6 @@ app.put('/users/update/:username', (req, res) => {
       $set: {
         username: req.body.newUsername,
         bio: req.body.newBio,
-        profilePic: req.body.newProfilePic,
       },
     },
     { new: true }
