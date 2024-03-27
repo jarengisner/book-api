@@ -420,7 +420,6 @@ app.put('/users/update/:username', (req, res) => {
     { username: req.params.username },
     {
       $set: {
-        username: req.body.newUsername,
         bio: req.body.newBio,
       },
     },
