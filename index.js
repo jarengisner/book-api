@@ -369,7 +369,8 @@ app.put(
   upload.single('photo'),
   async (req, res) => {
     const username = req.params.username;
-    const photo = req.file; // Assuming the photo is passed as 'photo' field in the multipart/form-data
+    const photo = req.file;
+    const region = 'us-east-2';
 
     try {
       // Upload photo to S3 bucket
@@ -385,18 +386,14 @@ app.put(
       );
 
       // Update user's profilePic attribute with the URL to the uploaded photo
-      const photoUrl = `https://${s3UploadParams.Bucket}.s3.amazonaws.com/${s3UploadParams.Key}`;
+      const photoUrl = `https://${s3UploadParams.Bucket}.s3.${region}.amazonaws.com/${s3UploadParams.Key}`;
       const updatedUser = await Users.findOneAndUpdate(
         { username: username },
         { $set: { profilePic: photoUrl } },
         { new: true }
       );
 
-      res.json({
-        success: true,
-        message: 'Photo uploaded and user profile updated successfully',
-        user: updatedUser,
-      });
+      res.json(updatedUser);
     } catch (error) {
       console.error(
         'Error uploading photo to S3 or updating user profile:',
