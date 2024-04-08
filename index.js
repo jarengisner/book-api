@@ -506,6 +506,32 @@ app.put('/clubs/:name/groupImg', (req, res) => {
     });
 });
 
+app.put('/posts/:groupname/:postid/like', async (req, res) => {
+  const { groupname, postid } = req.params;
+  const { userId } = req.params.userId;
+
+  try {
+    const group = Groups.findOne({ name: groupname });
+
+    let workingPost = group.posts.find((post) => post.id === postid);
+
+    if (workingPost.likedBy.includes(userId)) {
+      res.json({ message: 'post already liked by user' });
+    } else {
+      workingPost.likedBy.push(userId);
+      workingPost.likes += 1;
+    }
+
+    await group.save();
+
+    res.status(200).json({ message: 'Post successfully liked' });
+  } catch (err) {
+    console.log(err);
+    console.log(postid);
+    console.log('check how posts are found by postid');
+  }
+});
+
 //Delete requests
 
 //Delete
