@@ -506,96 +506,29 @@ app.put('/clubs/:name/groupImg', (req, res) => {
     });
 });
 
-/* app.put('/posts/:groupname/:postid/:userId/like', async (req, res) => {
-  const userId = req.params.userId;
-  const groupname = req.params.groupname;
-  const postid = req.params.postid;
-  console.log(postid, groupname, userId);
-
-  try {
-    const group = await Groups.findOne({ name: groupname });
-
-    if (!group) {
-      return res.status(404).json({ message: 'Group not found' });
-    }
-
-    let workingPost = null;
-
-    for (const post of group.posts) {
-      if (post.id === postid) {
-        workingPost = post;
-        break;
-      }
-    }
-
-    console.log(workingPost);
-    console.log(group.posts);
-
-    if (!workingPost) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    if (workingPost.likedBy.includes(userId)) {
-      return res.json({ message: 'Post already liked by user' });
-    } else {
-      workingPost.likedBy.push(userId);
-      workingPost.likes += 1;
-    }
-
-    await group.save();
-
-    res.status(200).json({ message: 'Post successfully liked' });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-}); */
-
-app.put('/posts/:groupname/:postid/:userId/like', (req, res) => {
-  const userId = req.params.userId;
-  const groupname = req.params.groupname;
-  const postid = req.params.postid;
-  console.log(postid, groupname, userId);
+//Likes Endpoint
+app.put('/posts/like', (req, res) => {
+  const userId = req.body.userId;
+  const groupname = req.body.groupname;
+  let postIndex = req.body.postIndex;
+  console.log(postIndex, groupname, userId);
 
   Groups.findOne({ name: groupname })
     .then((group) => {
-      if (!group) {
-        return res.status(404).json({ message: 'Group not found' });
-      }
+      let workingPost = group.posts[postIndex];
 
-      let workingPost = null;
+      workingPost.likes += 1;
+      workingPost.likedBy.push(userId);
 
-      for (const post of group.posts) {
-        if (post.id === postid) {
-          workingPost = post;
-          break;
-        }
-      }
-
-      console.log('Working Post:', workingPost);
-
-      if (!workingPost) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-
-      if (workingPost.likedBy.includes(userId)) {
-        return res.json({ message: 'Post already liked by user' });
-      } else {
-        workingPost.likedBy.push(userId);
-        workingPost.likes += 1;
-      }
-
-      // Mark 'posts' array as modified and save changes to database
-      group.markModified('posts');
+      //saves new updated group
       return group.save();
     })
-    .then((savedGroup) => {
-      console.log('Updated Group:', savedGroup);
-      res.status(200).json({ message: 'Post successfully liked' });
+    .then((updatedGroup) => {
+      //responds with the groups post, without exposing any other post data
+      res.json(updatedGroup.posts[postIndex]);
     })
     .catch((err) => {
-      console.error('Error:', err);
-      res.status(500).json({ message: 'Internal Server Error' });
+      console.log(err);
     });
 });
 
