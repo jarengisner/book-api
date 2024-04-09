@@ -6,10 +6,20 @@ let groupSchema = mongoose.Schema({
   description: {},
   members: [{ type: Object }],
   books: [{ type: Object }],
-  posts: [{ type: Object }],
+  posts: [
+    {
+      postUser: { type: String },
+      postBody: { type: String },
+      date: { type: String },
+      likes: { type: Number, default: 0 },
+      likedBy: [String],
+    },
+  ],
   groupImg: { type: String },
   tags: { type: Array },
 });
+
+//postUser, postBody, date, likes, likedBy, id
 
 let userSchema = mongoose.Schema({
   username: { type: String, required: true },
