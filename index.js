@@ -532,6 +532,34 @@ app.put('/posts/like', (req, res) => {
     });
 });
 
+app.put('/posts/unlike', (req, res) => {
+  const userId = req.body.userId;
+  const groupname = req.body.groupname;
+  let postIndex = req.body.postIndex;
+  console.log(postIndex, groupname, userId);
+
+  Groups.findOne({ name: groupname })
+    .then((group) => {
+      let workingPost = group.posts[postIndex];
+
+      workingPost.likes -= 1;
+
+      let workingSet = workingPost.likedBy.filter((name) => name != userId);
+
+      workingPost.likedBy = workingSet;
+
+      //saves new updated group
+      return group.save();
+    })
+    .then((updatedGroup) => {
+      //responds with the groups post, without exposing any other post data
+      res.json(updatedGroup.posts[postIndex]);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
 //Delete requests
 
 //Delete
