@@ -582,17 +582,28 @@ app.delete('/user/:username', (req, res) => {
     });
 });
 
-app.delete('/clubs/:name', (req, res) => {
-  //Add logic to check and make sure that the user deleting the club is the one that created the club
-  //Does current user === group member[0] maybe????
-  Groups.findOneAndRemove({ name: req.params.name }).then((club) => {
+app.delete('/clubs/:name', async (req, res) => {
+  try {
+    const clubName = req.params.name;
+
+    const club = await Groups.findOne({ name: clubName });
+
     if (!club) {
-      console.log('This club does not exist');
-      res.send('This club cannot be found');
-    } else {
-      res.send('Club was deleted');
+      console.log('Club not found');
+      return res.status(404).send('Club not found');
     }
-  });
+
+    const deleteResult = await Groups.deleteOne({ name: clubName });
+
+    if (deleteResult.deletedCount > 0) {
+      console.log('Club deleted successfully');
+    } else {
+      console.log('Failed to delete club');
+    }
+  } catch (error) {
+    console.error('Error deleting club:', error);
+    res.status(500);
+  }
 });
 
 const port = 8080;
