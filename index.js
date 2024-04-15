@@ -89,7 +89,7 @@ app.post(
   passport.authenticate('local', { session: false }),
   (req, res) => {
     const token = jwt.sign({ sub: req.user.id }, 'your_secret_key', {
-      expiresIn: '7d',
+      expiresIn: '2d',
     });
     res.json({ user: req.user, token });
   }
