@@ -105,6 +105,7 @@ app.get('/clubs', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('Something went wrong fetching all groups');
+      res.status(500);
     });
 });
 
@@ -117,6 +118,7 @@ app.get('/clubs/:name', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('Something went wrong fetching specific group');
+      res.status(500);
     });
 });
 
@@ -129,6 +131,7 @@ app.get('/users', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('Something went wrong when fetching all users');
+      res.status(500);
     });
 });
 
@@ -141,6 +144,7 @@ app.get('/users/:userId', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('something went wrong getting a specific user');
+      res.status(500);
     });
 });
 
@@ -153,6 +157,7 @@ app.get('/:user/clubs', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('Error fetching users clubs');
+      res.status(500);
     });
 });
 
