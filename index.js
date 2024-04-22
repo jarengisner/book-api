@@ -88,7 +88,7 @@ app.post(
   '/login',
   passport.authenticate('local', { session: false }),
   (req, res) => {
-    const token = jwt.sign({ sub: req.user.id }, 'your_secret_key', {
+    const token = jwt.sign({ sub: req.user.id }, process.env.SECRET_KEY, {
       expiresIn: '2d',
     });
     res.json({ user: req.user, token });
@@ -120,6 +120,7 @@ app.get('/clubs/:name', (req, res) => {
     });
 });
 
+//get all users
 app.get('/users', (req, res) => {
   Users.find()
     .then((items) => {
@@ -131,6 +132,7 @@ app.get('/users', (req, res) => {
     });
 });
 
+//get a user by userID
 app.get('/users/:userId', (req, res) => {
   Users.findOne({ username: req.params.userId })
     .then((profile) => {
@@ -142,6 +144,7 @@ app.get('/users/:userId', (req, res) => {
     });
 });
 
+//get clubs that a user is involved with
 app.get('/:user/clubs', (req, res) => {
   Users.findOne({ username: req.params.user })
     .then((userData) => {
@@ -190,13 +193,7 @@ app.post('/users', (req, res) => {
     });
 });
 
-/*
-Need to find a way to find the original creator or the group, 
-so that we can push them in to be the first member of the group.
-
-Possibly upon group creation, run a request to the update group members endpoint to immediately put the current user into the group???
-*/
-
+//create a new club
 app.post('/clubs', (req, res) => {
   Groups.findOne({ name: req.body.name })
     .then((thing) => {
@@ -229,14 +226,7 @@ app.post('/clubs', (req, res) => {
     });
 });
 
-/*
-IMPORTANT: 
-
-CLUB NAME in the request params
-
-USER username in the body request
-*/
-
+//join a club
 app.put('/clubs/join/:name/:username', async (req, res) => {
   try {
     // Find the user by username in the request body
@@ -279,11 +269,7 @@ app.put('/clubs/join/:name/:username', async (req, res) => {
   }
 });
 
-/*
-Pretty sure this may be able to be done within just one findOneAndUpdate, will require some more thinking, this is
-just to get the idea of what we are going for
-*/
-
+//leave a club
 app.put('/clubs/:name/:username/leave', async (req, res) => {
   try {
     // Find the group
@@ -328,7 +314,7 @@ app.put(
     try {
       // Upload photo to S3 bucket
       const s3UploadParams = {
-        Bucket: 'appphotostorage',
+        Bucket: process.env.BUCKET_NAME,
         Key: `${groupname}/${photo.originalname}`,
         Body: photo.buffer,
         ContentType: photo.mimetype,
@@ -375,7 +361,7 @@ app.put(
     try {
       // Upload photo to S3 bucket
       const s3UploadParams = {
-        Bucket: 'appphotostorage',
+        Bucket: process.env.BUCKET_NAME,
         Key: `${username}/${photo.originalname}`,
         Body: photo.buffer,
         ContentType: photo.mimetype,
@@ -428,6 +414,7 @@ app.put('/users/update/:username', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('Something went wrong when updating user details');
+      res.status(500);
     });
 });
 
@@ -445,11 +432,11 @@ app.put('/user/updatepassword/:username', (req, res) => {
     .catch((err) => {
       console.log(err);
       console.log('something went wrong when changing password');
+      res.status(500);
     });
 });
 
 //updates posts to a clubs page
-//SUPER IMPORTANT BELOW
 /*
 Posts need to be made in object format, so that we can add a date, etc, for filtering/presenting posts in order of most recent by default, etc.
 */
@@ -492,26 +479,11 @@ app.put('/clubs/:name/details', (req, res) => {
     });
 });
 
-app.put('/clubs/:name/groupImg', (req, res) => {
-  Groups.findOneAndUpdate(
-    { name: req.params.name },
-    { $set: { groupImg: req.body.groupImg } },
-    { new: true }
-  )
-    .then(() => {
-      console.log('Group Image succesffully updated');
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-});
-
 //Likes Endpoint
 app.put('/posts/like', (req, res) => {
   const userId = req.body.userId;
   const groupname = req.body.groupname;
   let postIndex = req.body.postIndex;
-  console.log(postIndex, groupname, userId);
 
   Groups.findOne({ name: groupname })
     .then((group) => {
@@ -529,6 +501,7 @@ app.put('/posts/like', (req, res) => {
     })
     .catch((err) => {
       console.log(err);
+      res.status(500).send('There was an internal server error');
     });
 });
 
@@ -557,10 +530,9 @@ app.put('/posts/unlike', (req, res) => {
     })
     .catch((err) => {
       console.log(err);
+      res.status(500).send('There was an internal server error');
     });
 });
-
-//Delete requests
 
 //Delete
 
@@ -573,12 +545,11 @@ app.delete('/user/:username', (req, res) => {
         console.log('user does not exist');
       } else {
         res.send('User was deleted');
-        //add functionality to remove user from state
       }
     })
     .catch((err) => {
       console.log(err);
-      console.log('something went wrong in account deletion');
+      res.status(500);
     });
 });
 
@@ -606,7 +577,7 @@ app.delete('/clubs/:name', async (req, res) => {
   }
 });
 
-const port = 8080;
-app.listen(port, '0.0.0.0', () => {
+const port = process.env.port || 8080;
+app.listen(port, () => {
   console.log(`Listening on port: ${port}`);
 });
